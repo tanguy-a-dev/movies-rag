@@ -1,0 +1,39 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+venv/
+
+# uv
+uv.lock
+
+# environment files (only if you use them locally)
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# dataset
+data/
+*.csv
+*.parquet
+*.jsonl
+
+data/*
+!data/.gitkeep
+
+.vscode/
+.idea/
+*.swp
+
+.chainlit/
+
+.python-version
