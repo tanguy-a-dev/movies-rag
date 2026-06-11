@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import Distance, VectorParams
 
 client = QdrantClient(url="http://qdrant:6333")
 

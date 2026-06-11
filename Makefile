@@ -6,7 +6,7 @@ help:
 	@grep -E '^[a-zA-Z_/-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-$(HELP_TARGET_COLUMN_WIDTH)s\033[0m %s\n", $$1, $$2}'
 
 install: ## Install dependencies
-	uv sync --group dev
+	docker compose exec app uv sync --group dev
 
 bootstrap: ## Start full environment (docker + models + dataset)
 	up ollama_init qdrant_init download
@@ -17,19 +17,19 @@ check: ## Run lint, type checks and tests
 	@make test
 
 lint: ## Run ruff linter
-	ruff check .
+	docker compose exec app ruff check .
 
 lint_fix: ## Auto-fix lint issues
-	ruff check . --fix
+	docker compose exec app ruff check . --fix
 
 format: ## Format code with ruff
-	ruff format .
+	docker compose exec app ruff format .
 
 type_check: ## Run static type checks
-	ty check
+	docker compose exec app ty check
 
 test: ## Run tests
-	uv run pytest
+	docker compose exec app uv run pytest
 
 dev: ## Start dev environment (compose + dev overrides)
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build

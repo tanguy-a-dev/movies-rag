@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13-slim as prod
 
 WORKDIR /app
 
@@ -14,3 +14,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN uv pip install -e .
 
 CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+FROM prod AS dev
+
+RUN uv pip install -e . --group dev
+
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
