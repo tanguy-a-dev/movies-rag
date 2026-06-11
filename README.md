@@ -1,6 +1,33 @@
 # MoviesRAG
 
+[![Python](https://img.shields.io/badge/Python-3.13%2B-blue?logo=python)](https://www.python.org/)
+[![Package Manager](https://img.shields.io/badge/managed%20with-uv-purple.svg?style=flat&logo=astral)](https://github.com/astral-sh/uv)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
+[![Ollama](https://img.shields.io/badge/Ollama-LLM%20Runtime-black)](https://ollama.com/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-ff3366)](https://qdrant.tech/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![UI](https://img.shields.io/badge/Chainlit-red.svg?style=flat)](https://docs.chainlit.io/)
+
+
 A Retrieval-Augmented Generation (RAG) movie recommendation system built on the [TMDB Movies Dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies). Ask natural-language questions and get answers grounded in movie metadata retrieved from a vector database.
+
+---
+
+## Table of Contents
+
+- [MoviesRAG](#moviesrag)
+- [How it works](#how-it-works)
+- [Stack](#stack)
+- [Prerequisites](#prerequisites)
+- [Quick start](#quick-start)
+  - [Service URLs](#service-urls)
+- [Makefile commands](#makefile-commands)
+- [API](#api)
+- [Configuration](#configuration)
+- [Development](#development)
+
+---
 
 ## How it works
 
@@ -22,6 +49,8 @@ flowchart LR
 3. **Retrieve** — Qdrant returns the most similar movies (cosine distance).
 4. **Generate** — Llama 3.1 answers using only the retrieved context.
 
+---
+
 ## Stack
 
 | Component | Role |
@@ -33,11 +62,15 @@ flowchart LR
 | [pandas](https://pandas.pydata.org/) | Dataset loading |
 | [kagglehub](https://github.com/Kaggle/kagglehub) | Dataset download |
 
+---
+
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - [uv](https://docs.astral.sh/uv/) (for local dev tooling)
 - A [Kaggle](https://www.kaggle.com/) account with API credentials at `~/.kaggle/kaggle.json`
+
+---
 
 ## Quick start
 
@@ -68,6 +101,8 @@ Open the chat UI at **http://localhost:8001** and ask something like:
 
 > I want a mind-bending sci-fi thriller about dreams
 
+---
+
 ### Service URLs
 
 | Service | URL |
@@ -84,10 +119,13 @@ Stop everything with:
 make down
 ```
 
+---
+
 ## Makefile commands
 
 Run `make help` to list all Makefile commands.
 
+---
 
 ## API
 
@@ -115,9 +153,11 @@ Response:
 }
 ```
 
-## Configuration
+---
 
-Copy `.env.example` to `.env` to override defaults. All settings are defined in `src/config.py` via pydantic-settings:
+## Settings
+
+Copy `.env.example` to `.env` to override defaults. All settings are defined in `src/settings.py` via pydantic-settings:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -133,6 +173,8 @@ Ingest limit can also be set per run:
 ```bash
 docker compose exec app python -m scripts.ingest --limit 500
 ```
+
+---
 
 ## Development
 
