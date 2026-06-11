@@ -4,9 +4,9 @@ from qdrant_client.models import PointStruct
 
 from src.clients.ollama import ollama_client
 from src.clients.qdrant import client
-from src.settings import settings
 from src.dataset.document_builder import movie_to_document
 from src.dataset.loader import load_movies
+from src.settings import settings
 
 
 def ingest(limit: int | None = None) -> None:
