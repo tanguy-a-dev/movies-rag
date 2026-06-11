@@ -1,20 +1,26 @@
-.PHONY: setup lint format download up down logs
+.PHONY: setup lint format download up down logs check type_check qdrant_init ollama_init
 
-setup:
-	uv sync
-	uv add ruff kagglehub
+setup: up qdrant_init ollama_init download
+
+check: lint type_check
 
 lint:
 	ruff check .
 
+lint_fix:
+	ruff check . --fix
+
 format:
 	ruff format .
 
+type_check:
+	ty check
+
 download:
-	docker compose run --rm app python -m cmd.downloadDataset
+	docker compose exec app python -m cmd.downloadDataset
 
 explore_dataset:
-	docker compose run --rm app python -m cmd.exploreDataset
+	docker compose exec app python -m cmd.exploreDataset
 
 test_embedding:
 	docker compose exec app python -m cmd.testEmbedding

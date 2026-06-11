@@ -1,3 +1,5 @@
+from qdrant_client.models import PointStruct
+
 from src.dataset.loader import load_movies
 from src.embeddings.httpEmbedding import embedText
 from src.vectordb.qdrantClient import client
@@ -14,15 +16,15 @@ def ingest(n=200):
         client.upsert(
             collection_name="movies",
             points=[
-                {
-                    "id": int(row["id"]),
-                    "vector": vector,
-                    "payload": {
+                PointStruct(
+                    id=int(row["id"]),
+                    vector=vector,
+                    payload={
                         "title": row["title"],
                         "overview": row["overview"],
                         "genres": row["genres"],
                     },
-                }
+                )
             ],
         )
 

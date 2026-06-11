@@ -1,5 +1,4 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import SearchRequest
 from src.embeddings.httpEmbedding import embedText
 
 client = QdrantClient(url="http://qdrant:6333")
@@ -16,10 +15,14 @@ def search_movies(query: str, top_k: int = 5):
     )
 
     for r in results.points:
+        payload = r.payload
+        if payload is None:
+            continue
+
         print("\n---")
-        print("title:", r.payload["title"])
-        print("genres:", r.payload["genres"])
-        print("overview:", r.payload["overview"][:200])
+        print("title:", payload["title"])
+        print("genres:", payload["genres"])
+        print("overview:", payload["overview"][:200])
 
 
 if __name__ == "__main__":

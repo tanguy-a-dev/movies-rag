@@ -3,7 +3,7 @@ from src.dataset.documentBuilder import movieToDocument
 
 
 if __name__ == "__main__":
-    try: 
+    try:
         df = load_movies().fillna("")
 
         print(df.columns)

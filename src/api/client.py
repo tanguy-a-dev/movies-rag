@@ -2,13 +2,13 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from src.embeddings.httpEmbedding import embedText
+from src.config import OLLAMA_URL, QDRANT_URL
 from qdrant_client import QdrantClient
 import requests
 
 app = FastAPI()
 
-qdrant = QdrantClient(url="http://qdrant:6333")
-OLLAMA_URL = "http://ollama:11434"
+qdrant = QdrantClient(url=QDRANT_URL)
 
 
 class AskRequest(BaseModel):
@@ -29,9 +29,7 @@ def build_context(points):
     context = []
     for p in points:
         payload = p.payload
-        context.append(
-            f"{payload.get('title')}: {payload.get('overview')}"
-        )
+        context.append(f"{payload.get('title')}: {payload.get('overview')}")
     return "\n\n".join(context)
 
 
