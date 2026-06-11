@@ -2,13 +2,13 @@ import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from src.embeddings.httpEmbedding import embedText
 
-from src.settings import OLLAMA_URL, QDRANT_URL
+from src.clients.ollama import ollama_client
+from src.settings import settings
 
 app = FastAPI()
 
-qdrant = QdrantClient(url=QDRANT_URL)
+qdrant = QdrantClient(url=settings.qdrant_url)
 
 
 class AskRequest(BaseModel):
@@ -49,7 +49,7 @@ Answer:
 """
 
     response = requests.post(
-        f"{OLLAMA_URL}/api/generate",
+        f"{settings.ollama_url}/api/generate",
         json={
             "model": "llama3.1:8b",
             "prompt": prompt,
@@ -63,7 +63,7 @@ Answer:
 
 @app.post("/ask")
 def ask(req: AskRequest):
-    vector = embedText(req.question)
+    vector = ollama_client.embed_text(req.question)
     matches = search_qdrant(vector)
     context = build_context(matches)
     answer = generate_answer(req.question, context)
