@@ -15,14 +15,6 @@ flowchart LR
 
     OllamaLLM --> FastAPI
     FastAPI --> Chainlit --> User
-
-    %% spacing helpers
-    classDef invisible fill:transparent,stroke:transparent;
-    spacer1(( )):::invisible
-    spacer2(( )):::invisible
-
-    Chainlit -.-> spacer1 -.-> FastAPI
-    FastAPI -.-> spacer2 -.-> OllamaLLM
 ```
 
 1. **Ingest** — Movies are converted to structured documents, embedded with Ollama, and stored in Qdrant.
