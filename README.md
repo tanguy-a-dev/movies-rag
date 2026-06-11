@@ -8,15 +8,24 @@ A Retrieval-Augmented Generation (RAG) movie recommendation system built on the 
 flowchart LR
     User --> Chainlit
     Chainlit --> FastAPI
+
     FastAPI --> OllamaEmbed["Ollama (nomic-embed-text)"]
     FastAPI --> Qdrant
     FastAPI --> OllamaLLM["Ollama (llama3.1:8b)"]
+
     OllamaLLM --> FastAPI
-    FastAPI --> Chainlit
-    Chainlit --> User
+    FastAPI --> Chainlit --> User
+
+    %% spacing helpers
+    classDef invisible fill:transparent,stroke:transparent;
+    spacer1(( )):::invisible
+    spacer2(( )):::invisible
+
+    Chainlit -.-> spacer1 -.-> FastAPI
+    FastAPI -.-> spacer2 -.-> OllamaLLM
 ```
 
-1. **Ingest** — Movie titles, overviews, and taglines are embedded with Ollama and stored in Qdrant.
+1. **Ingest** — Movies are converted to structured documents, embedded with Ollama, and stored in Qdrant.
 2. **Query** — The user's question is embedded with the same model.
 3. **Retrieve** — Qdrant returns the most similar movies (cosine distance).
 4. **Generate** — Llama 3.1 answers using only the retrieved context.
@@ -25,7 +34,7 @@ flowchart LR
 
 | Component | Role |
 |-----------|------|
-| [FastAPI](https://fastapi.tiangolo.com/) | REST API (`/ask` endpoint) |
+| [FastAPI](https://fastapi.tiangolo.com/) | REST API (`/ask`, `/health`, `/ready`) |
 | [Chainlit](https://docs.chainlit.io/) | Chat UI |
 | [Qdrant](https://qdrant.tech/) | Vector store |
 | [Ollama](https://ollama.com/) | Embeddings (`nomic-embed-text`) + LLM (`llama3.1:8b`) |
@@ -35,28 +44,31 @@ flowchart LR
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
-- [uv](https://docs.astral.sh/uv/) (for local dev tooling only)
+- [uv](https://docs.astral.sh/uv/) (for local dev tooling)
 - A [Kaggle](https://www.kaggle.com/) account with API credentials at `~/.kaggle/kaggle.json`
 
 ## Quick start
 
 ```bash
-# Install dev dependencies locally (linting, formatting)
-make setup
+# Install local dev tools (lint, type check, tests)
+make install
 
-# Start all services (app, Qdrant, Ollama, Chainlit)
-make up
+# Start all services with hot-reload (development)
+make dev
 
-# Pull required Ollama models (first time only)
+# First-time setup: pull models, init Qdrant, download dataset
 make ollama_init
-
-# Download the TMDB dataset into ./data
+make qdrant_init
 make download
 
-# Create the Qdrant collection
-make qdrant_init
-
 # Embed and index movies (default: first 200 rows)
+make ingest
+```
+
+Or run the full bootstrap in one go:
+
+```bash
+make bootstrap
 make ingest
 ```
 
@@ -70,6 +82,8 @@ Open the chat UI at **http://localhost:8001** and ask something like:
 |---------|-----|
 | Chainlit UI | http://localhost:8001 |
 | FastAPI docs | http://localhost:8000/docs |
+| Health | http://localhost:8000/health |
+| Readiness | http://localhost:8000/ready |
 | Qdrant dashboard | http://localhost:6333/dashboard |
 
 Stop everything with:
@@ -78,6 +92,11 @@ Stop everything with:
 make down
 ```
 
+## Makefile commands
+
+Run `make help` to list all Makefile commands.
+
+
 ## API
 
 **POST** `/ask`
@@ -85,7 +104,7 @@ make down
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "Recommend a dark comedy from the 90s"}'
+  -d '{"question": "Recommend a dark comedy from the 90s", "top_k": 5}'
 ```
 
 Response:
@@ -93,24 +112,43 @@ Response:
 ```json
 {
   "question": "Recommend a dark comedy from the 90s",
-  "answer": "..."
+  "answer": "...",
+  "sources": [
+    {
+      "title": "...",
+      "genres": "...",
+      "overview": "..."
+    }
+  ]
 }
 ```
 
-## Configuration notes
+## Configuration
 
-- **Dataset path** — `src/config.py` points to `/app/data/tmdb/TMDB_movie_dataset_v11.csv` inside the container (mounted from `./data` on the host).
-- **Ingest size** — `cmd/ingest.py` indexes the first 200 movies by default. Change the `n` parameter in `ingest()` to index more.
-- **Vector dimensions** — 768 (matching `nomic-embed-text`). The Qdrant collection is created with cosine distance.
-- **Ollama models** — Embeddings use `nomic-embed-text`; generation uses `llama3.1:8b`. Both must be pulled before ingesting or querying.
+Copy `.env.example` to `.env` to override defaults. All settings are defined in `src/config.py` via pydantic-settings:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_URL` | `http://ollama:11434` | Ollama API base URL |
+| `QDRANT_URL` | `http://qdrant:6333` | Qdrant API base URL |
+| `EMBEDDING_MODEL` | `nomic-embed-text` | Embedding model |
+| `LLM_MODEL` | `llama3.1:8b` | Generation model |
+| `COLLECTION_NAME` | `movies` | Qdrant collection |
+| `INGEST_LIMIT` | `200` | Default movies to ingest |
+
+Ingest limit can also be set per run:
+
+```bash
+docker compose exec app python -m scripts.ingest --limit 500
+```
 
 ## Development
 
 ```bash
-make setup      # uv sync + dev tools
+make install    # uv sync + dev tools
+make dev        # docker with hot-reload
 make lint       # ruff check
 make format     # ruff format
 make type_check # ty type checker
+make test       # pytest
 ```
-
-Services run inside Docker with hot-reload enabled for the FastAPI app. Source code is mounted as a volume, so local edits are reflected without rebuilding.

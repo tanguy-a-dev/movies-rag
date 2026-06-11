@@ -2,20 +2,15 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# install uv
 RUN pip install uv
 
-# copy project
-COPY . /app
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY scripts ./scripts
+COPY ui ./ui
 
-# create isolated environment inside container
 RUN uv venv /opt/venv
-
-# activate it for all future steps
 ENV PATH="/opt/venv/bin:$PATH"
-
-# install dependencies into that venv
 RUN uv pip install -e .
 
-# run as module (clean import model)
-CMD ["python", "-m", "cmd.inspectDataset"]
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

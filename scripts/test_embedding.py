@@ -1,8 +1,8 @@
-from src.embeddings.httpEmbedding import embedText
+from src.clients.ollama import ollama_client
 
 
-def main():
-    vec = embedText("test movie")
+def main() -> None:
+    vec = ollama_client.embed_text("test movie")
     print("vector size:", len(vec))
     print("first values:", vec[:5])
 

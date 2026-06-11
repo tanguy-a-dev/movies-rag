@@ -5,18 +5,32 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
       - ./data:/app/data
-    command: uvicorn src.api.client:app --host 0.0.0.0 --port 8000 --reload
-  
+    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+
   qdrant:
-    image: qdrant/qdrant
+    image: qdrant/qdrant:v1.13.2
     ports:
       - "6333:6333"
       - "6334:6334"
-
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ollama:
     image: ollama/ollama:latest
@@ -27,17 +41,24 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/11434' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   chainlit:
     build: .
     working_dir: /app
-    volumes:
-      - .:/app
     command: chainlit run ui/chainlit.py --host 0.0.0.0 --port 8001
     ports:
       - "8001:8001"
+    environment:
+      - API_URL=http://app:8000
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
 volumes:
   qdrant_data:

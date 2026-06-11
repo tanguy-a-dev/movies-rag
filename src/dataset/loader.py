@@ -1,11 +1,10 @@
 import pandas as pd
-from src.config import DATASET_PATH
+
+from src.settings import settings
 
 
 def load_movies():
-    if not DATASET_PATH.exists():
-        raise FileNotFoundError(f"Dataset not found at {DATASET_PATH}")
+    if not settings.dataset_path.exists():
+        raise FileNotFoundError(f"Dataset not found at {settings.dataset_path}")
 
-    df = pd.read_csv(DATASET_PATH)
-
-    return df
+    return pd.read_csv(settings.dataset_path)

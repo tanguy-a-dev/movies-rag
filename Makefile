@@ -1,51 +1,72 @@
-.PHONY: setup lint format download up down logs check type_check qdrant_init ollama_init
+.PHONY: install bootstrap dev up down logs check lint lint_fix format type_check test download explore_dataset test_embedding ollama_init ingest qdrant_init qdrant_search help
 
-setup: up qdrant_init ollama_init download
+HELP_TARGET_COLUMN_WIDTH = 40
 
-check: lint type_check
+help:
+	@grep -E '^[a-zA-Z_/-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-$(HELP_TARGET_COLUMN_WIDTH)s\033[0m %s\n", $$1, $$2}'
 
-lint:
+install: ## Install dependencies
+	uv sync --group dev
+
+bootstrap: ## Start full environment (docker + models + dataset)
+	up ollama_init qdrant_init download
+
+check: ## Run lint, type checks and tests
+	@make lint
+	@make type_check
+	@make test
+
+lint: ## Run ruff linter
 	ruff check .
 
-lint_fix:
+lint_fix: ## Auto-fix lint issues
 	ruff check . --fix
 
-format:
+format: ## Format code with ruff
 	ruff format .
 
-type_check:
+type_check: ## Run static type checks
 	ty check
 
-download:
-	docker compose exec app python -m cmd.downloadDataset
+test: ## Run tests
+	uv run pytest
 
-explore_dataset:
-	docker compose exec app python -m cmd.exploreDataset
+dev: ## Start dev environment (compose + dev overrides)
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+	@echo "Chainlit UI: http://localhost:8001"
+	@echo "FastAPI:     http://localhost:8000/docs"
+	@echo "Qdrant:      http://localhost:6333/dashboard"
 
-test_embedding:
-	docker compose exec app python -m cmd.testEmbedding
-
-up:
+up: ## Start production docker stack
 	docker compose up -d --build
 	@echo "Chainlit UI: http://localhost:8001"
 	@echo "FastAPI:     http://localhost:8000/docs"
 	@echo "Qdrant:      http://localhost:6333/dashboard"
 
-down:
+down: ## Stop docker stack
 	docker compose down
 
-logs:
+logs: ## Follow docker logs
 	docker compose logs -f
 
-ollama_init:
-	docker exec -it moviesrag-ollama-1 ollama pull llama3.1:8b
-	docker exec -it moviesrag-ollama-1 ollama pull nomic-embed-text
+ollama_init: ## Pull LLM and embedding models into Ollama
+	docker compose exec ollama ollama pull llama3.1:8b
+	docker compose exec ollama ollama pull nomic-embed-text
 
-ingest:
-	docker compose exec app python -m cmd.ingest
+download: ## Download dataset
+	docker compose exec app python -m scripts.download_dataset
 
-qdrant_init:
-	docker compose exec app python -m cmd.qdrantInit
+explore_dataset: ## Inspect dataset
+	docker compose exec app python -m scripts.explore_dataset
 
-qdrant_search:
-	docker compose exec app python -m cmd.qdrantSearch
+test_embedding: ## Test embedding pipeline
+	docker compose exec app python -m scripts.test_embedding
+
+ingest: ## Ingest dataset into vector DB
+	docker compose exec app python -m scripts.ingest
+
+qdrant_init: ## Initialize Qdrant collections
+	docker compose exec app python -m scripts.qdrant_init
+
+qdrant_search: ## Run Qdrant search test
+	docker compose exec app python -m scripts.qdrant_search

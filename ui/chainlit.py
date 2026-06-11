@@ -1,21 +1,34 @@
-import chainlit as cl
-import requests
+import os
 
-API_URL = "http://app:8000/ask"
+import chainlit as cl
+import httpx
+
+API_URL = os.getenv("API_URL", "http://app:8000")
 
 
 @cl.on_message
-async def main(message: cl.Message):
-    response = requests.post(
-        API_URL,
-        json={"question": message.content},
-        timeout=120,
-    )
+async def main(message: cl.Message) -> None:
+    async with httpx.AsyncClient(timeout=120) as client:
+        try:
+            response = await client.post(
+                f"{API_URL}/ask",
+                json={"question": message.content},
+            )
+        except httpx.HTTPError:
+            await cl.Message(content="Could not reach the API.").send()
+            return
 
     if response.status_code != 200:
-        await cl.Message(content="Error calling API").send()
+        detail = response.json().get("detail", "Unknown error")
+        await cl.Message(content=f"API error: {detail}").send()
         return
 
-    answer = response.json()["answer"]
+    data = response.json()
+    content = data["answer"]
 
-    await cl.Message(content=answer).send()
+    sources = data.get("sources", [])
+    if sources:
+        titles = "\n".join(f"- {s['title']}" for s in sources)
+        content += f"\n\n**Sources:**\n{titles}"
+
+    await cl.Message(content=content).send()

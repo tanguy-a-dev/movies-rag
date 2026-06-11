@@ -1,7 +1,7 @@
-from src.models.movieDocument import MovieDocument
+from src.models.movie_document import MovieDocument
 
 
-def movieToDocument(movie) -> MovieDocument:
+def movie_to_document(movie) -> MovieDocument:
     text = f"""
 Title: {movie["title"]}
 
@@ -23,6 +23,7 @@ Overview:
         "movie_id": int(movie["id"]),
         "imdb_id": movie["imdb_id"],
         "title": movie["title"],
+        "overview": movie["overview"],
         "genres": movie["genres"],
         "popularity": float(movie["popularity"]),
         "vote_average": float(movie["vote_average"]),

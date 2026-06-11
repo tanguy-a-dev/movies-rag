@@ -10,9 +10,6 @@ wheels/
 .venv/
 venv/
 
-# uv
-uv.lock
-
 # environment files (only if you use them locally)
 .env
 .env.*

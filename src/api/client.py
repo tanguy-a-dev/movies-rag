@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from src.embeddings.httpEmbedding import embedText
-from src.config import OLLAMA_URL, QDRANT_URL
+from src.settings import OLLAMA_URL, QDRANT_URL
 from qdrant_client import QdrantClient
 import requests
 
