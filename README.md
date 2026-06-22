@@ -33,16 +33,17 @@ A Retrieval-Augmented Generation (RAG) movie recommendation system built on the 
 
 ```mermaid
 flowchart LR
-    User --> Chainlit
-    Chainlit --> FastAPI
 
-    FastAPI --> OllamaEmbed["Ollama (nomic-embed-text)"]
-    FastAPI --> Qdrant
-    FastAPI --> OllamaLLM["Ollama (llama3.1:8b)"]
+Movies[Movies Dataset] --> StructDocs[Structured Documents]
 
-    OllamaLLM --> FastAPI
-    FastAPI --> Chainlit --> User
+StructDocs --> NomicEmbed["Nomic Embeddings (Ollama)"]
+NomicEmbed --> Qdrant[(Qdrant Vector DB)]
 ```
+
+
+1. Movie data is cleaned and converted into structured document format.
+2. The Nomic embedding model (served via Ollama) generates vector representations of each document.
+3. These vectors are stored in Qdrant, where they can be queried using similarity search during runtime.
 
 ```mermaid
 flowchart LR
@@ -50,30 +51,20 @@ flowchart LR
 User --> Chainlit[Chainlit UI]
 Chainlit --> FastAPI[FastAPI Backend]
 
-FastAPI --> NomicEmbed[Nomic Embeddings (Ollama)]
+FastAPI --> NomicEmbed["Nomic Embeddings (Ollama)"]
 NomicEmbed --> Qdrant[(Qdrant Vector DB)]
 
 Qdrant --> Context[Top-K Retrieved Documents]
 
-Context --> Llama[Llama 3.1 (Ollama)]
+Context --> Llama["Llama 3.1 (Ollama)"]
 Llama --> FastAPI
 
 FastAPI --> Chainlit --> User
 ```
 
-```mermaid
-flowchart LR
-
-Movies[Movies Dataset] --> StructDocs[Structured Documents]
-
-StructDocs --> NomicEmbed[Nomic Embeddings (Ollama)]
-NomicEmbed --> Qdrant[(Qdrant Vector DB)]
-```
-
-1. **Ingest** — Movies are converted to structured documents, embedded with Ollama, and stored in Qdrant.
-2. **Query** — The user's question is embedded with the same model.
-3. **Retrieve** — Qdrant returns the most similar movies (cosine distance).
-4. **Generate** — Llama 3.1 answers using only the retrieved context.
+1. The user interacts with the Chainlit interface, which sends the request to FastAPI.
+2. FastAPI uses Nomic (via Ollama) to embed the query and performs a similarity search in Qdrant using cosine distance.
+3. The retrieved documents are passed to Llama 3.1 (via Ollama), which generates the final response returned through FastAPI to the interface.
 
 ---
 
