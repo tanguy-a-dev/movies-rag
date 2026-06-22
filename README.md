@@ -44,6 +44,32 @@ flowchart LR
     FastAPI --> Chainlit --> User
 ```
 
+```mermaid
+flowchart LR
+
+User --> Chainlit[Chainlit UI]
+Chainlit --> FastAPI[FastAPI Backend]
+
+FastAPI --> NomicEmbed[Nomic Embeddings (Ollama)]
+NomicEmbed --> Qdrant[(Qdrant Vector DB)]
+
+Qdrant --> Context[Top-K Retrieved Documents]
+
+Context --> Llama[Llama 3.1 (Ollama)]
+Llama --> FastAPI
+
+FastAPI --> Chainlit --> User
+```
+
+```mermaid
+flowchart LR
+
+Movies[Movies Dataset] --> StructDocs[Structured Documents]
+
+StructDocs --> NomicEmbed[Nomic Embeddings (Ollama)]
+NomicEmbed --> Qdrant[(Qdrant Vector DB)]
+```
+
 1. **Ingest** — Movies are converted to structured documents, embedded with Ollama, and stored in Qdrant.
 2. **Query** — The user's question is embedded with the same model.
 3. **Retrieve** — Qdrant returns the most similar movies (cosine distance).
