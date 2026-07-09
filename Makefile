@@ -16,6 +16,9 @@ check: ## Run lint, type checks and tests
 	@make type_check
 	@make test
 
+bash:
+	docker exec -it moviesrag-app-1 bash
+
 lint: ## Run ruff linter
 	docker compose exec app ruff check .
 

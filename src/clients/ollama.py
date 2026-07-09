@@ -16,6 +16,15 @@ class OllamaClient:
         response.raise_for_status()
         return response.json()["embedding"]
 
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        response = httpx.post(
+            f"{self.base_url}/api/embed",
+            json={"model": settings.embedding_model, "input": texts},
+            timeout=settings.embedding_timeout,
+        )
+        response.raise_for_status()
+        return response.json()["embeddings"]
+
     async def embed_text_async(self, text: str) -> list[float]:
         async with httpx.AsyncClient(timeout=settings.embedding_timeout) as client:
             response = await client.post(
