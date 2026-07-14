@@ -9,6 +9,7 @@ services:
     command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
     environment:
       - OLLAMA_URL=http://host.docker.internal:11434
+      - QDRANT_URL=http://qdrant:6333
     depends_on: !override
       qdrant:
         condition: service_healthy

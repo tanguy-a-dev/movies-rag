@@ -1,9 +1,16 @@
 import os
+import re
 
 import chainlit as cl
 import httpx
 
 API_URL = os.getenv("API_URL", "http://app:8000")
+CITATION_PATTERN = re.compile(r"\[id:\s*\d+\]")
+
+
+def strip_citations(text: str) -> str:
+    text = CITATION_PATTERN.sub("", text)
+    return re.sub(r"[ \t]{2,}", " ", text)
 
 
 @cl.on_message
@@ -24,12 +31,7 @@ async def main(message: cl.Message) -> None:
         return
 
     data = response.json()
-    content = data["answer"]
-
-    sources = data.get("sources", [])
-    if sources:
-        titles = "\n".join(f"- {s['title']}" for s in sources)
-        content += f"\n\n**Sources:**\n{titles}"
+    content = strip_citations(data["answer"])
 
     if not data.get("validated", True):
         hallucinated_ids = data.get("hallucinated_ids", [])
