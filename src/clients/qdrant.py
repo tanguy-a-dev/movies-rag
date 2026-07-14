@@ -30,3 +30,24 @@ def ping() -> bool:
         return True
     except Exception:
         return False
+
+
+def get_existing_ids(collection_name: str | None = None) -> set[int]:
+    name = collection_name or settings.collection_name
+    if not client.collection_exists(name):
+        return set()
+
+    ids: set[int] = set()
+    offset = None
+    while True:
+        points, offset = client.scroll(
+            collection_name=name,
+            with_payload=False,
+            with_vectors=False,
+            limit=10000,
+            offset=offset,
+        )
+        ids.update(point.id for point in points)
+        if offset is None:
+            break
+    return ids

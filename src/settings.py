@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     collection_name: str = "movies"
     vector_size: int = 768
     top_k: int = 5
-    ingest_limit: int = 200
     ingest_batch_size: int = 32
 
     ollama_timeout: float = 120.0

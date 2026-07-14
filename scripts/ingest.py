@@ -5,19 +5,31 @@ import time
 from qdrant_client.models import PointStruct
 
 from src.clients.ollama import ollama_client
-from src.clients.qdrant import client
+from src.clients.qdrant import client, get_existing_ids
 from src.dataset.document_builder import movie_to_document
 from src.dataset.loader import load_movies
 from src.settings import settings
 
-
 def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
-    n = limit or settings.ingest_limit
     batch_size = batch_size or settings.ingest_batch_size
 
     load_start = time.perf_counter()
-    df = load_movies().fillna("").head(n)
+    df = load_movies().fillna("")
     print(f"loaded {len(df)} rows in {time.perf_counter() - load_start:.3f}s")
+
+    existing_ids_start = time.perf_counter()
+    existing_ids = get_existing_ids()
+    print(
+        f"{len(existing_ids)} documents already in Qdrant "
+        f"(fetched in {time.perf_counter() - existing_ids_start:.3f}s)"
+    )
+
+    df = df[~df["id"].isin(existing_ids)]
+    if limit is None:
+        print(f"{len(df)} new rows to ingest, no limit")
+    else:
+        print(f"{len(df)} new rows to ingest, taking up to {limit}")
+        df = df.head(limit)
 
     durations: list[float] = []
     build_durations: list[float] = []
@@ -88,7 +100,7 @@ def main() -> None:
         "--limit",
         type=int,
         default=None,
-        help=f"Number of movies to ingest (default: {settings.ingest_limit})",
+        help="Number of new movies to ingest (default: no limit, ingest all new rows)",
     )
     parser.add_argument(
         "--batch-size",
