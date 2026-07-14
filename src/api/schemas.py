@@ -7,6 +7,7 @@ class AskRequest(BaseModel):
 
 
 class Source(BaseModel):
+    movie_id: int | None = None
     title: str
     genres: str | None = None
     overview: str | None = None
@@ -16,6 +17,8 @@ class AskResponse(BaseModel):
     question: str
     answer: str
     sources: list[Source]
+    validated: bool
+    hallucinated_ids: list[int] = []
 
 
 class HealthResponse(BaseModel):

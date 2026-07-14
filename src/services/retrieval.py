@@ -34,9 +34,10 @@ def build_context(points: Sequence[PointWithPayload]) -> str:
     context = []
     for point in points:
         payload = point.payload or {}
+        movie_id = payload.get("movie_id")
         title = payload.get("title", "Unknown")
         overview = payload.get("overview", "")
-        context.append(f"{title}: {overview}")
+        context.append(f"[id: {movie_id}] {title}: {overview}")
     return "\n\n".join(context)
 
 
@@ -46,6 +47,7 @@ def extract_sources(points: Sequence[PointWithPayload]) -> list[dict]:
         payload = point.payload or {}
         sources.append(
             {
+                "movie_id": payload.get("movie_id"),
                 "title": payload.get("title", "Unknown"),
                 "genres": payload.get("genres"),
                 "overview": payload.get("overview"),

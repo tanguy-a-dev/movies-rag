@@ -31,4 +31,11 @@ async def main(message: cl.Message) -> None:
         titles = "\n".join(f"- {s['title']}" for s in sources)
         content += f"\n\n**Sources:**\n{titles}"
 
+    if not data.get("validated", True):
+        hallucinated_ids = data.get("hallucinated_ids", [])
+        content += (
+            "\n\n⚠️ This answer may reference a movie not found in our database "
+            f"(ids: {', '.join(str(i) for i in hallucinated_ids)})."
+        )
+
     await cl.Message(content=content).send()
