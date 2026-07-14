@@ -7,7 +7,21 @@ services:
       - .:/app
       - ./data:/app/data
     command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - OLLAMA_URL=http://host.docker.internal:11434
+    depends_on: !override
+      qdrant:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   chainlit:
     volumes:
       - .:/app
+
+  # Use your own local Ollama instead (faster on Apple Silicon: real GPU
+  # acceleration vs Docker Desktop's CPU-only containers). Opt back in with
+  # `docker compose --profile with-ollama -f docker-compose.yml -f docker-compose.dev.yml up`
+  ollama:
+    profiles:
+      - with-ollama

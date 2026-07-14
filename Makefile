@@ -11,6 +11,18 @@ install: ## Install dependencies
 bootstrap: ## Start full environment (docker + models + dataset)
 	up ollama_init qdrant_init download
 
+dev: ## Start dev environment (compose + dev overrides)
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+	@echo "Chainlit UI: http://localhost:8001"
+	@echo "FastAPI:     http://localhost:8000/docs"
+	@echo "Qdrant:      http://localhost:6333/dashboard"
+
+up: ## Start production docker stack
+	docker compose up -d --build
+	@echo "Chainlit UI: http://localhost:8001"
+	@echo "FastAPI:     http://localhost:8000/docs"
+	@echo "Qdrant:      http://localhost:6333/dashboard"
+
 check: ## Run lint, type checks and tests
 	@make lint
 	@make type_check
@@ -33,18 +45,6 @@ type_check: ## Run static type checks
 
 test: ## Run tests
 	docker compose exec app uv run pytest
-
-dev: ## Start dev environment (compose + dev overrides)
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-	@echo "Chainlit UI: http://localhost:8001"
-	@echo "FastAPI:     http://localhost:8000/docs"
-	@echo "Qdrant:      http://localhost:6333/dashboard"
-
-up: ## Start production docker stack
-	docker compose up -d --build
-	@echo "Chainlit UI: http://localhost:8001"
-	@echo "FastAPI:     http://localhost:8000/docs"
-	@echo "Qdrant:      http://localhost:6333/dashboard"
 
 down: ## Stop docker stack
 	docker compose down
