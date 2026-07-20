@@ -10,6 +10,7 @@ from src.dataset.document_builder import movie_to_document
 from src.dataset.loader import load_movies
 from src.settings import settings
 
+
 def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
     batch_size = batch_size or settings.ingest_batch_size
 
@@ -66,7 +67,7 @@ def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
         elapsed = time.perf_counter() - start
         ingested += len(docs)
 
-        # amortize batch timings per document so medians stay comparable across batch sizes
+        # amortize batch timings/document so medians stay comparable across batch sizes
         durations.extend([elapsed / len(docs)] * len(docs))
         build_durations.extend([build_elapsed / len(docs)] * len(docs))
         embed_durations.extend([embed_elapsed / len(docs)] * len(docs))
@@ -106,7 +107,8 @@ def main() -> None:
         "--batch-size",
         type=int,
         default=None,
-        help=f"Number of documents per embed/upsert batch (default: {settings.ingest_batch_size})",
+        help=f"Number of documents per embed/upsert \
+            batch (default: {settings.ingest_batch_size})",
     )
     args = parser.parse_args()
     ingest(limit=args.limit, batch_size=args.batch_size)
