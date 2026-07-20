@@ -2,7 +2,7 @@ import re
 from collections.abc import Sequence
 from typing import Protocol
 
-CITED_ID_PATTERN = re.compile(r"\[id:\s*(\d+)\]")
+CITED_ID_PATTERN = re.compile(r"[\[\(](?:id:\s*)?(\d+)(?:[:\s][^\]\)]*)?[\]\)]")
 
 
 class PointWithPayload(Protocol):

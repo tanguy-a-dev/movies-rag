@@ -5,12 +5,16 @@ import chainlit as cl
 import httpx
 
 API_URL = os.getenv("API_URL", "http://app:8000")
-CITATION_PATTERN = re.compile(r"\[id:\s*\d+\]")
+
+# Mirrors validation.CITED_ID_PATTERN's shape, but captures any trailing
+# title text (e.g. "[id: title]") instead of the id, so it can be
+# preserved when the id itself is stripped from the displayed answer.
+CITATION_STRIP_PATTERN = re.compile(r"[\[\(](?:id:\s*)?\d+(?:[:\s]([^\]\)]*))?[\]\)]")
 
 
 def strip_citations(text: str) -> str:
-    text = CITATION_PATTERN.sub("", text)
-    return re.sub(r"[ \t]{2,}", " ", text)
+    text = CITATION_STRIP_PATTERN.sub(lambda m: m.group(1) or "", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
 
 
 @cl.on_message

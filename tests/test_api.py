@@ -24,11 +24,14 @@ async def test_ask_returns_answer_and_sources(mock_ask):
         "answer": "Try Inception.",
         "sources": [
             {
+                "movie_id": 1,
                 "title": "Inception",
                 "genres": "Action, Sci-Fi",
                 "overview": "A dream heist.",
             }
         ],
+        "validated": True,
+        "hallucinated_ids": [],
     }
 
     async with AsyncClient(

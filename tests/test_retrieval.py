@@ -35,6 +35,7 @@ def test_extract_sources_returns_structured_payload():
 
     assert sources == [
         {
+            "movie_id": None,
             "title": "Inception",
             "genres": "Action, Sci-Fi",
             "overview": "Dream heist.",

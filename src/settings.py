@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     ollama_timeout: float = 120.0
     embedding_timeout: float = 30.0
+    qdrant_timeout: float = 30.0
 
 
 settings = Settings()

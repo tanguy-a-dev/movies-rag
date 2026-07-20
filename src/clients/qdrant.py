@@ -5,7 +5,7 @@ from src.settings import settings
 
 
 def get_client() -> QdrantClient:
-    return QdrantClient(url=settings.qdrant_url)
+    return QdrantClient(url=settings.qdrant_url, timeout=settings.qdrant_timeout)
 
 
 client = get_client()
@@ -47,7 +47,7 @@ def get_existing_ids(collection_name: str | None = None) -> set[int]:
             limit=10000,
             offset=offset,
         )
-        ids.update(point.id for point in points)
+        ids.update(int(point.id) for point in points)
         if offset is None:
             break
     return ids

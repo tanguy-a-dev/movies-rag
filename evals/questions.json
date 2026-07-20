@@ -1,0 +1,82 @@
+[
+  {
+    "question": "Recommend a sci-fi movie about space exploration",
+    "expected_genres": ["Science Fiction"]
+  },
+  {
+    "question": "I want a scary horror movie for Halloween",
+    "expected_genres": ["Horror"]
+  },
+  {
+    "question": "Suggest a romantic comedy",
+    "expected_genres": ["Romance", "Comedy"]
+  },
+  {
+    "question": "What's a good action movie with lots of explosions?",
+    "expected_genres": ["Action"]
+  },
+  {
+    "question": "Recommend an animated movie for kids",
+    "expected_genres": ["Animation", "Family"]
+  },
+  {
+    "question": "I'm looking for a psychological thriller",
+    "expected_genres": ["Thriller"]
+  },
+  {
+    "question": "Suggest a war movie based on history",
+    "expected_genres": ["War", "History"]
+  },
+  {
+    "question": "What's a good crime drama?",
+    "expected_genres": ["Crime", "Drama"]
+  },
+  {
+    "question": "Recommend a fantasy movie with magic",
+    "expected_genres": ["Fantasy"]
+  },
+  {
+    "question": "I want a documentary about nature",
+    "expected_genres": ["Documentary"]
+  },
+  {
+    "question": "Suggest a musical movie",
+    "expected_genres": ["Music"]
+  },
+  {
+    "question": "What's a good mystery movie?",
+    "expected_genres": ["Mystery"]
+  },
+  {
+    "question": "Recommend a western movie",
+    "expected_genres": ["Western"]
+  },
+  {
+    "question": "I want a superhero movie with lots of action",
+    "expected_genres": ["Action", "Adventure"]
+  },
+  {
+    "question": "Suggest a movie about time travel",
+    "expected_genres": ["Science Fiction"]
+  },
+  {
+    "question": "What's a good coming-of-age drama?",
+    "expected_genres": ["Drama"]
+  },
+  {
+    "question": "Recommend a heist movie",
+    "expected_genres": ["Crime"]
+  },
+  {
+    "question": "I want a feel-good family movie",
+    "expected_genres": ["Family"]
+  },
+  {
+    "question": "Suggest a movie about artificial intelligence",
+    "expected_genres": ["Science Fiction"]
+  },
+  {
+    "question": "What's a classic film noir style movie?",
+    "expected_genres": ["Crime", "Mystery", "Thriller"]
+  }
+]
