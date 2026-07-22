@@ -13,10 +13,15 @@ class Settings(BaseSettings):
 
     embedding_model: str = "nomic-embed-text"
     llm_model: str = "llama3.1:8b"
+    llm_temperature: float = 0.2
     collection_name: str = "movies"
     vector_size: int = 768
     top_k: int = 5
     ingest_batch_size: int = 32
+
+    rerank_enabled: bool = True
+    rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    retrieval_candidates: int = 25
 
     ollama_timeout: float = 120.0
     embedding_timeout: float = 30.0

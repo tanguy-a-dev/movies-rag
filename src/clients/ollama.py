@@ -42,6 +42,7 @@ class OllamaClient:
                     "model": settings.llm_model,
                     "prompt": prompt,
                     "stream": False,
+                    "options": {"temperature": settings.llm_temperature},
                 },
             )
             response.raise_for_status()

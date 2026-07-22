@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.services import rag
 from src.services.validation import extract_cited_ids
+from src.settings import settings
 
 DEFAULT_QUESTIONS_PATH = Path(__file__).resolve().\
     parent.parent / "evals" / "questions.json"
@@ -47,7 +48,8 @@ async def eval_question(question: dict) -> dict:
 
 async def run_eval(questions_path: Path) -> None:
     questions = load_questions(questions_path)
-    print(f"running {len(questions)} eval questions\n")
+    mode = "reranking ON" if settings.rerank_enabled else "reranking OFF"
+    print(f"running {len(questions)} eval questions ({mode})\n")
 
     results = []
     for question in questions:
@@ -84,7 +86,14 @@ def main() -> None:
         default=DEFAULT_QUESTIONS_PATH,
         help=f"Path to questions JSON file (default: {DEFAULT_QUESTIONS_PATH})",
     )
+    parser.add_argument(
+        "--no-rerank",
+        action="store_true",
+        help="Disable reranking for this run, to compare against the default",
+    )
     args = parser.parse_args()
+    if args.no_rerank:
+        settings.rerank_enabled = False
     asyncio.run(run_eval(args.questions))
 
 

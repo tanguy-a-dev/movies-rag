@@ -182,8 +182,12 @@ Copy `.env.example` to `.env` to override defaults. All settings are defined in 
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant API base URL |
 | `EMBEDDING_MODEL` | `nomic-embed-text` | Embedding model |
 | `LLM_MODEL` | `llama3.1:8b` | Generation model |
+| `LLM_TEMPERATURE` | `0.2` | Sampling temperature for answer generation (low, for consistent formatting) |
 | `COLLECTION_NAME` | `movies` | Qdrant collection |
 | `INGEST_LIMIT` | `200` | Default movies to ingest |
+| `RERANK_ENABLED` | `true` | Rerank vector-search candidates with a cross-encoder before building context |
+| `RERANK_MODEL` | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Cross-encoder model used for reranking |
+| `RETRIEVAL_CANDIDATES` | `25` | Candidate pool fetched from Qdrant before reranking down to `TOP_K` |
 
 Ingest limit can also be set per run:
 
