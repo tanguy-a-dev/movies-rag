@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from src.clients.ollama import ollama_client
 
 PROMPT_TEMPLATE = """You are a movie recommendation system.
@@ -9,6 +11,10 @@ and nothing else. Never mention a movie that is not in the context.
 "- **Title** [id: X]: one sentence on why it fits the question."
 3. Do not add an introduction, summary, or closing remark. Output the list \
 and nothing else.
+4. If conversation history is given below, it shows what you already \
+recommended earlier in this chat. The context has already been narrowed to \
+exclude those movies, so just answer the new question the same way \
+(the exclusion is already handled for you).
 
 Example:
 
@@ -28,7 +34,7 @@ mind-bending reality.
 breaking free of a simulation.
 
 Now do the same for the following context and question.
-
+{history}
 Context:
 {context}
 
@@ -39,6 +45,25 @@ Answer:
 """
 
 
-async def generate_answer(question: str, context: str) -> str:
-    prompt = PROMPT_TEMPLATE.format(context=context, question=question)
+def _format_history(history: Sequence[dict]) -> str:
+    if not history:
+        return ""
+
+    turns = "\n".join(
+        f"User: {turn['question']}\nAssistant recommended: {turn['answer']}"
+        for turn in history
+    )
+    return f"\nConversation history:\n{turns}\n"
+
+
+async def generate_answer(
+    question: str,
+    context: str,
+    history: Sequence[dict] | None = None,
+) -> str:
+    prompt = PROMPT_TEMPLATE.format(
+        context=context,
+        question=question,
+        history=_format_history(history or []),
+    )
     return await ollama_client.generate_async(prompt)

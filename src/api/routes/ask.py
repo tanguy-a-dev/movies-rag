@@ -10,7 +10,11 @@ router = APIRouter(tags=["ask"])
 @router.post("/ask", response_model=AskResponse)
 async def ask(req: AskRequest) -> AskResponse:
     try:
-        result = await rag.ask(req.question, top_k=req.top_k)
+        result = await rag.ask(
+            req.question,
+            top_k=req.top_k,
+            history=[turn.model_dump() for turn in req.history],
+        )
         return AskResponse(**result)
     except httpx.HTTPError as exc:
         raise HTTPException(
