@@ -205,5 +205,25 @@ make dev        # docker with hot-reload
 make lint       # ruff check
 make format     # ruff format
 make type_check # ty type checker
-make test       # pytest
+make test       # pytest (fast, mocked, no live services)
+make evals      # scripts/eval.py (hallucination rate, citation coverage, latency)
+make deepeval   # LLM-judged quality evals (see below)
 ```
+
+### DeepEval quality evals
+
+`evals/test_rag_quality.py` runs the real `rag.ask()` pipeline (live Ollama + Qdrant) against
+`evals/questions.json` and grades each answer with [DeepEval](https://deepeval.com/) metrics,
+judged by the same local `llm_model` (via `deepeval.models.OllamaModel`) — no API key or
+external service required:
+
+- **AnswerRelevancyMetric** — does the answer address the question
+- **FaithfulnessMetric** — does the answer stick to the retrieved context (no hallucination)
+- **ContextualRelevancyMetric** — is the retrieved/reranked context actually relevant to the query
+- **GEval "Genre Match"** — a custom criterion checking recommendations match `expected_genres`
+
+This is a separate suite from `make test`: it needs live Ollama/Qdrant and is slow
+(~1-2 minutes per question, since each metric makes its own judge-LLM call on top of the
+pipeline's own generation call). It's excluded from `make test`/CI by default
+(`testpaths = ["tests"]` in `pyproject.toml`); run it explicitly with `make deepeval`, or a subset
+with `docker compose exec app uv run pytest evals -v -k "sci-fi"`.

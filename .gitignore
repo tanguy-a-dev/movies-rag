@@ -34,3 +34,5 @@ data/*
 .chainlit/
 
 .python-version
+
+.deepeval/

@@ -1,4 +1,4 @@
-.PHONY: install bootstrap dev up down logs check lint lint_fix format type_check test download explore_dataset test_embedding ollama_init ingest qdrant_init qdrant_search help evals
+.PHONY: install bootstrap dev up down logs check lint lint_fix format type_check test download explore_dataset test_embedding ollama_init ingest qdrant_init qdrant_search help evals deepeval
 
 HELP_TARGET_COLUMN_WIDTH = 40
 
@@ -76,3 +76,6 @@ qdrant_search: ## Run Qdrant search test
 
 evals: ## Run evals
 	docker exec moviesrag-app-1 python3 -m scripts.eval
+
+deepeval: ## Run DeepEval LLM-quality evals (slow: live Ollama+Qdrant, ~2min/question)
+	docker compose exec app uv run pytest evals -v
