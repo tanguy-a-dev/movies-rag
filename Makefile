@@ -1,4 +1,4 @@
-.PHONY: install bootstrap dev up down logs check lint lint_fix format type_check test download explore_dataset test_embedding ollama_init ingest qdrant_init qdrant_search help evals deepeval
+.PHONY: install bootstrap dev up down logs check lint lint_fix format type_check test download explore_dataset test_embedding ollama_init ingest qdrant_init qdrant_search help evals deepeval migrate_to_hybrid
 
 HELP_TARGET_COLUMN_WIDTH = 40
 
@@ -73,6 +73,9 @@ qdrant_init: ## Initialize Qdrant collections
 
 qdrant_search: ## Run Qdrant search test
 	docker compose exec app python -m scripts.qdrant_search
+
+migrate_to_hybrid: ## One-time: reindex the collection with dense+sparse (hybrid) vectors
+	docker compose exec app python -m scripts.migrate_to_hybrid --swap
 
 evals: ## Run evals
 	docker exec moviesrag-app-1 python3 -m scripts.eval

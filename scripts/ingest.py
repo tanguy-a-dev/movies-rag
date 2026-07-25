@@ -4,8 +4,9 @@ import time
 
 from qdrant_client.models import PointStruct
 
+from src.clients import sparse_embedder
 from src.clients.ollama import ollama_client
-from src.clients.qdrant import client, get_existing_ids
+from src.clients.qdrant import client, ensure_collection, get_existing_ids
 from src.dataset.document_builder import movie_to_document
 from src.dataset.loader import load_movies
 from src.settings import settings
@@ -13,6 +14,7 @@ from src.settings import settings
 
 def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
     batch_size = batch_size or settings.ingest_batch_size
+    ensure_collection()
 
     load_start = time.perf_counter()
     df = load_movies().fillna("")
@@ -48,6 +50,7 @@ def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
 
         embed_start = time.perf_counter()
         vectors = ollama_client.embed_texts([doc.text for doc in docs])
+        sparse_vectors = sparse_embedder.embed_documents([doc.text for doc in docs])
         embed_elapsed = time.perf_counter() - embed_start
 
         upsert_start = time.perf_counter()
@@ -56,10 +59,13 @@ def ingest(limit: int | None = None, batch_size: int | None = None) -> None:
             points=[
                 PointStruct(
                     id=doc.id,
-                    vector=vector,
+                    vector={
+                        "": vector,
+                        settings.sparse_vector_name: sparse_vector,
+                    },
                     payload=doc.payload,
                 )
-                for doc, vector in zip(docs, vectors)
+                for doc, vector, sparse_vector in zip(docs, vectors, sparse_vectors)
             ],
         )
         upsert_elapsed = time.perf_counter() - upsert_start

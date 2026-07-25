@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from qdrant_client.models import Distance, Modifier, SparseVectorParams, VectorParams
 
 from src.settings import settings
 
@@ -11,17 +11,36 @@ def get_client() -> QdrantClient:
 client = get_client()
 
 
+def _sparse_vectors_config() -> dict[str, SparseVectorParams]:
+    return {settings.sparse_vector_name: SparseVectorParams(modifier=Modifier.IDF)}
+
+
 def ensure_collection(vector_size: int | None = None) -> None:
     size = vector_size or settings.vector_size
-    if client.collection_exists(settings.collection_name):
-        print(f"[QDRANT] collection '{settings.collection_name}' already exists")
+    if not client.collection_exists(settings.collection_name):
+        client.create_collection(
+            collection_name=settings.collection_name,
+            vectors_config=VectorParams(size=size, distance=Distance.COSINE),
+            sparse_vectors_config=_sparse_vectors_config(),
+        )
+        print(f"[QDRANT] collection '{settings.collection_name}' created")
         return
 
-    client.create_collection(
-        collection_name=settings.collection_name,
-        vectors_config=VectorParams(size=size, distance=Distance.COSINE),
+    print(f"[QDRANT] collection '{settings.collection_name}' already exists")
+    info = client.get_collection(settings.collection_name)
+    has_sparse = (
+        info.config.params.sparse_vectors
+        and settings.sparse_vector_name in info.config.params.sparse_vectors
     )
-    print(f"[QDRANT] collection '{settings.collection_name}' created")
+    if not has_sparse:
+        # Qdrant cannot add a new named vector to an already-created collection
+        # (only tune params of ones that already exist) -- a populated collection
+        # missing sparse vectors needs a full reindex, not an in-place update.
+        print(
+            f"[QDRANT] collection '{settings.collection_name}' has no "
+            f"'{settings.sparse_vector_name}' sparse vector and can't be updated "
+            "in place. Run `python -m scripts.migrate_to_hybrid --swap` instead."
+        )
 
 
 def ping() -> bool:

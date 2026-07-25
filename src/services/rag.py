@@ -26,10 +26,19 @@ async def ask(
             vector,
             top_k=max(settings.retrieval_candidates, k),
             exclude_ids=exclude_ids,
+            question=question,
         )
+        c = extract_sources(candidates)
+        c = [candidate["title"] for candidate in c]
+        print(f"candidates: {c}")
         matches = await asyncio.to_thread(rerank_movies, question, candidates, k)
+        m = extract_sources(matches)
+        m = [match["title"] for match in m]
+        print(f"matches: {m}")
     else:
-        matches = await search_movies(vector, top_k=k, exclude_ids=exclude_ids)
+        matches = await search_movies(
+            vector, top_k=k, exclude_ids=exclude_ids, question=question
+        )
 
     context = build_context(matches)
     answer = await generate_answer(question, context, history=history)

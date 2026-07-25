@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     retrieval_candidates: int = 25
 
+    hybrid_search_enabled: bool = True
+    sparse_model: str = "Qdrant/bm25"
+    sparse_vector_name: str = "bm25"
+
     ollama_timeout: float = 120.0
     embedding_timeout: float = 30.0
     qdrant_timeout: float = 30.0

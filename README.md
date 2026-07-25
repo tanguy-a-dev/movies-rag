@@ -37,13 +37,15 @@ flowchart LR
 Movies[Movies Dataset] --> StructDocs[Structured Documents]
 
 StructDocs --> NomicEmbed["Nomic Embeddings (Ollama)"]
+StructDocs --> BM25["BM25 Sparse Vectors (FastEmbed)"]
 NomicEmbed --> Qdrant[(Qdrant Vector DB)]
+BM25 --> Qdrant
 ```
 
 
 1. Movie data is cleaned and converted into structured document format.
-2. The Nomic embedding model (served via Ollama) generates vector representations of each document.
-3. These vectors are stored in Qdrant, where they can be queried using similarity search during runtime.
+2. The Nomic embedding model (served via Ollama) generates a dense vector per document, and FastEmbed's BM25 model generates a sparse (lexical) vector.
+3. Both vectors are stored in Qdrant against the same point, queryable independently or fused together at query time.
 
 ```mermaid
 flowchart LR
@@ -52,9 +54,12 @@ User --> Chainlit[Chainlit UI]
 Chainlit --> FastAPI[FastAPI Backend]
 
 FastAPI --> NomicEmbed["Nomic Embeddings (Ollama)"]
+FastAPI --> BM25["BM25 Sparse Query (FastEmbed)"]
 NomicEmbed --> Qdrant[(Qdrant Vector DB)]
+BM25 --> Qdrant
 
-Qdrant --> Context[Top-K Retrieved Documents]
+Qdrant --> Rerank["Cross-Encoder Rerank"]
+Rerank --> Context[Top-K Retrieved Documents]
 
 Context --> Llama["Llama 3.1 (Ollama)"]
 Llama --> FastAPI
@@ -63,8 +68,8 @@ FastAPI --> Chainlit --> User
 ```
 
 1. The user interacts with the Chainlit interface, which sends the request to FastAPI.
-2. FastAPI uses Nomic (via Ollama) to embed the query and performs a similarity search in Qdrant using cosine distance.
-3. The retrieved documents are passed to Llama 3.1 (via Ollama), which generates the final response returned through FastAPI to the interface.
+2. FastAPI embeds the query both as a dense vector (Nomic, via Ollama) and a sparse vector (BM25, via FastEmbed), then Qdrant fuses the two result sets with Reciprocal Rank Fusion (RRF) — this lets exact keyword/title matches (e.g. "Avatar") surface alongside conceptually similar results that pure semantic search would find.
+3. The fused candidates are reranked by a cross-encoder, and the retrieved documents are passed to Llama 3.1 (via Ollama), which generates the final response returned through FastAPI to the interface.
 
 ---
 
@@ -74,8 +79,9 @@ FastAPI --> Chainlit --> User
 |-----------|------|
 | [FastAPI](https://fastapi.tiangolo.com/) | REST API (`/ask`, `/health`, `/ready`) |
 | [Chainlit](https://docs.chainlit.io/) | Chat UI |
-| [Qdrant](https://qdrant.tech/) | Vector store |
+| [Qdrant](https://qdrant.tech/) | Vector store (dense + sparse hybrid search) |
 | [Ollama](https://ollama.com/) | Embeddings (`nomic-embed-text`) + LLM (`llama3.1:8b`) |
+| [FastEmbed](https://github.com/qdrant/fastembed) | Sparse (BM25) lexical vectors for hybrid search |
 | [pandas](https://pandas.pydata.org/) | Dataset loading |
 | [kagglehub](https://github.com/Kaggle/kagglehub) | Dataset download |
 
@@ -188,12 +194,26 @@ Copy `.env.example` to `.env` to override defaults. All settings are defined in 
 | `RERANK_ENABLED` | `true` | Rerank vector-search candidates with a cross-encoder before building context |
 | `RERANK_MODEL` | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Cross-encoder model used for reranking |
 | `RETRIEVAL_CANDIDATES` | `25` | Candidate pool fetched from Qdrant before reranking down to `TOP_K` |
+| `HYBRID_SEARCH_ENABLED` | `true` | Fuse dense + sparse (BM25) search results with RRF, for exact title/keyword matches |
+| `SPARSE_MODEL` | `Qdrant/bm25` | FastEmbed sparse embedding model |
+| `SPARSE_VECTOR_NAME` | `bm25` | Name of the sparse vector field in the Qdrant collection |
 
 Ingest limit can also be set per run:
 
 ```bash
 docker compose exec app python -m scripts.ingest --limit 500
 ```
+
+### Migrating an existing collection to hybrid search
+
+Qdrant can't add a new named vector to a collection that's already been created — adding
+sparse vectors to a collection ingested before this feature existed requires a one-time
+reindex: `make migrate_to_hybrid` (or `python -m scripts.migrate_to_hybrid --swap`) copies
+every point into a new `<collection>_hybrid` collection (reusing the existing dense vectors
+and payload — no re-embedding via Ollama, just a fast local BM25 pass), then atomically
+swaps a Qdrant alias so `COLLECTION_NAME` keeps resolving correctly with no other config
+changes. Collections created fresh via `scripts.qdrant_init`/`scripts.ingest` already get
+both vector types from the start.
 
 ---
 
