@@ -2,7 +2,12 @@ from unittest.mock import patch
 
 from qdrant_client.models import Fusion, FusionQuery, SparseVector
 
-from src.services.retrieval import _search_sync, build_context, extract_sources
+from src.services.retrieval import (
+    _search_sync,
+    build_context,
+    extract_sources,
+    sort_by_metadata,
+)
 
 
 class FakePoint:
@@ -94,3 +99,56 @@ def test_search_sync_falls_back_to_dense_only_without_question():
         _, kwargs = mock_client.query_points.call_args
         assert "prefetch" not in kwargs
         assert kwargs["query"] == [0.1, 0.2]
+
+
+def test_sort_by_metadata_no_sort_keeps_original_order():
+    points = [
+        FakePoint({"title": "A", "vote_average": 5.0, "popularity": 100.0}),
+        FakePoint({"title": "B", "vote_average": 9.0, "popularity": 10.0}),
+    ]
+
+    result = sort_by_metadata(points, [])
+
+    assert [(p.payload or {})["title"] for p in result] == ["A", "B"]
+
+
+def test_sort_by_metadata_rating_only():
+    points = [
+        FakePoint({"title": "Low rated", "vote_average": 4.0, "popularity": 500.0}),
+        FakePoint({"title": "High rated", "vote_average": 9.0, "popularity": 10.0}),
+    ]
+
+    result = sort_by_metadata(points, ["rating"])
+
+    assert [(p.payload or {})["title"] for p in result] == ["High rated", "Low rated"]
+
+
+def test_sort_by_metadata_popularity_only():
+    points = [
+        FakePoint({"title": "Low pop", "vote_average": 9.0, "popularity": 10.0}),
+        FakePoint({"title": "High pop", "vote_average": 4.0, "popularity": 500.0}),
+    ]
+
+    result = sort_by_metadata(points, ["popularity"])
+
+    assert [(p.payload or {})["title"] for p in result] == ["High pop", "Low pop"]
+
+
+def test_sort_by_metadata_combined_normalizes_scales():
+    # popularity is on a much larger scale than rating; without min-max
+    # normalization it would dominate the combined score regardless of rating
+    points = [
+        FakePoint(
+            {"title": "High pop only", "vote_average": 1.0, "popularity": 1000.0}
+        ),
+        FakePoint({"title": "Balanced", "vote_average": 9.0, "popularity": 900.0}),
+        FakePoint({"title": "Low both", "vote_average": 5.0, "popularity": 500.0}),
+    ]
+
+    result = sort_by_metadata(points, ["rating", "popularity"])
+
+    assert [(p.payload or {})["title"] for p in result] == [
+        "Balanced",
+        "High pop only",
+        "Low both",
+    ]

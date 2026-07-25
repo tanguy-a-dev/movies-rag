@@ -197,6 +197,28 @@ Copy `.env.example` to `.env` to override defaults. All settings are defined in 
 | `HYBRID_SEARCH_ENABLED` | `true` | Fuse dense + sparse (BM25) search results with RRF, for exact title/keyword matches |
 | `SPARSE_MODEL` | `Qdrant/bm25` | FastEmbed sparse embedding model |
 | `SPARSE_VECTOR_NAME` | `bm25` | Name of the sparse vector field in the Qdrant collection |
+| `METADATA_RERANK_POOL` | `30` | Pool size to rerank down to (before sorting by rating/popularity) when the query asks for "best rated"/"most popular" |
+
+### Metadata queries (rating, popularity, release date)
+
+Beyond semantic/keyword matching, the question itself can carry structured intent that
+`src/services/query_intent.py` detects with pattern matching (no extra LLM call):
+
+- **"best rated" / "highest rated" / "top rated"** — sorts the relevance-reranked candidate
+  pool by `vote_average` descending.
+- **"most popular" / "trending"** — sorts by `popularity` descending. Asking for both rating
+  and popularity combines them via min-max normalization (so popularity's much larger scale
+  doesn't just drown out rating).
+- **Dates** — "from the 90s"/"from the 1990s", "before 2000", "after 2010", "in 2015" — applied
+  as a native Qdrant `release_date` range filter (indexed for performance) alongside the
+  semantic/hybrid search, not left to the LLM to guess.
+
+Sorting happens *after* the cross-encoder rerank, over a wider pool (`METADATA_RERANK_POOL`,
+default 30) than the final `TOP_K` — this keeps results genuinely on-topic (still about the
+thing you asked for) while surfacing the best/most popular ones within that relevant set,
+rather than just the top-30 raw scores regardless of relevance.
+
+Actor/cast filtering isn't supported yet — the underlying TMDB dataset has no cast/crew field.
 
 Ingest limit can also be set per run:
 

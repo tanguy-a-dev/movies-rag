@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     sparse_model: str = "Qdrant/bm25"
     sparse_vector_name: str = "bm25"
 
+    metadata_rerank_pool: int = 30
+
     ollama_timeout: float = 120.0
     embedding_timeout: float = 30.0
     qdrant_timeout: float = 30.0
