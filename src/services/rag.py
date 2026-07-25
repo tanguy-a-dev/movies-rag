@@ -41,7 +41,9 @@ async def ask(
         )
 
     context = build_context(matches)
-    answer = await generate_answer(question, context, history=history)
+    answer = await generate_answer(
+        question, context, movie_count=len(matches), history=history
+    )
     validation = validate_answer(answer, matches)
 
     return {

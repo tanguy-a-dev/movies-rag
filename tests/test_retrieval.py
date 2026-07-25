@@ -24,6 +24,18 @@ def test_build_context_joins_titles_and_overviews():
     assert "The Matrix: Simulated reality." in context
 
 
+def test_build_context_numbers_entries_and_falls_back_for_missing_overview():
+    points = [
+        FakePoint({"title": "Inception", "overview": "Dream heist."}),
+        FakePoint({"title": "No Overview Movie", "overview": ""}),
+    ]
+
+    context = build_context(points)
+
+    assert "1. [id: None] Inception: Dream heist." in context
+    assert "2. [id: None] No Overview Movie: No overview available." in context
+
+
 def test_extract_sources_returns_structured_payload():
     points = [
         FakePoint(
