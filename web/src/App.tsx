@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { ask } from "./api";
-import { stripCitations } from "./citations";
+import { linkifyCitations } from "./citations";
 import type { ChatMessage, HistoryTurn } from "./types";
 import "./App.css";
+
+// Movie links should open in a new tab rather than navigating away from the chat.
+const markdownComponents = {
+  a: (props: React.ComponentPropsWithoutRef<"a">) => (
+    <a {...props} target="_blank" rel="noopener noreferrer" />
+  ),
+};
 
 const MAX_HISTORY_TURNS = 5;
 
@@ -43,7 +51,7 @@ function App() {
     try {
       const result = await ask(question, historyRef.current);
 
-      let content = stripCitations(result.answer);
+      let content = linkifyCitations(result.answer);
       if (!result.validated) {
         content +=
           "\n\n⚠️ This answer may reference a movie not found in our database " +
@@ -80,7 +88,13 @@ function App() {
       <div className="chat-messages">
         {messages.map((message, i) => (
           <div key={i} className={`bubble ${message.role}`}>
-            {message.content}
+            {message.role === "assistant" ? (
+              <ReactMarkdown components={markdownComponents}>
+                {message.content}
+              </ReactMarkdown>
+            ) : (
+              message.content
+            )}
           </div>
         ))}
         {loading && <div className="bubble assistant loading">Thinking…</div>}

@@ -42,6 +42,41 @@
   color: #eee;
 }
 
+.bubble.assistant p,
+.bubble.assistant ul,
+.bubble.assistant ol {
+  margin: 0.4rem 0;
+}
+
+.bubble.assistant p:first-child,
+.bubble.assistant ul:first-child,
+.bubble.assistant ol:first-child {
+  margin-top: 0;
+}
+
+.bubble.assistant p:last-child,
+.bubble.assistant ul:last-child,
+.bubble.assistant ol:last-child {
+  margin-bottom: 0;
+}
+
+.bubble.assistant ul,
+.bubble.assistant ol {
+  padding-left: 1.3rem;
+}
+
+.bubble.assistant li {
+  margin: 0.3rem 0;
+}
+
+.bubble.assistant a {
+  color: #ff8fa8;
+}
+
+.bubble.assistant a:hover {
+  color: #ffb4c4;
+}
+
 .bubble.error {
   align-self: flex-start;
   background: #3a1a1a;
