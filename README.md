@@ -7,7 +7,7 @@
 [![Ollama](https://img.shields.io/badge/Ollama-LLM%20Runtime-black)](https://ollama.com/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-ff3366)](https://qdrant.tech/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![UI](https://img.shields.io/badge/Chainlit-red.svg?style=flat)](https://docs.chainlit.io/)
+[![UI](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 
 
 A Retrieval-Augmented Generation (RAG) movie recommendation system built on the [TMDB Movies Dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies). Ask natural-language questions and get answers grounded in movie metadata retrieved from a vector database.
@@ -22,6 +22,7 @@ A Retrieval-Augmented Generation (RAG) movie recommendation system built on the 
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
   - [Service URLs](#service-urls)
+  - [Web UI (`web/`)](#web-ui-web)
 - [Makefile commands](#makefile-commands)
 - [API](#api)
 - [Configuration](#configuration)
@@ -50,8 +51,8 @@ BM25 --> Qdrant
 ```mermaid
 flowchart LR
 
-User --> Chainlit[Chainlit UI]
-Chainlit --> FastAPI[FastAPI Backend]
+User --> Web[React Web UI]
+Web --> FastAPI[FastAPI Backend]
 
 FastAPI --> NomicEmbed["Nomic Embeddings (Ollama)"]
 FastAPI --> BM25["BM25 Sparse Query (FastEmbed)"]
@@ -64,10 +65,10 @@ Rerank --> Context[Top-K Retrieved Documents]
 Context --> Llama["Llama 3.1 (Ollama)"]
 Llama --> FastAPI
 
-FastAPI --> Chainlit --> User
+FastAPI --> Web --> User
 ```
 
-1. The user interacts with the Chainlit interface, which sends the request to FastAPI.
+1. The user interacts with the web interface, which calls FastAPI's `/ask` endpoint directly from the browser.
 2. FastAPI embeds the query both as a dense vector (Nomic, via Ollama) and a sparse vector (BM25, via FastEmbed), then Qdrant fuses the two result sets with Reciprocal Rank Fusion (RRF) — this lets exact keyword/title matches (e.g. "Avatar") surface alongside conceptually similar results that pure semantic search would find.
 3. The fused candidates are reranked by a cross-encoder, and the retrieved documents are passed to Llama 3.1 (via Ollama), which generates the final response returned through FastAPI to the interface.
 
@@ -78,7 +79,7 @@ FastAPI --> Chainlit --> User
 | Component | Role |
 |-----------|------|
 | [FastAPI](https://fastapi.tiangolo.com/) | REST API (`/ask`, `/health`, `/ready`) |
-| [Chainlit](https://docs.chainlit.io/) | Chat UI |
+| [React](https://react.dev/) + [Vite](https://vite.dev/) | Chat UI (`web/`) |
 | [Qdrant](https://qdrant.tech/) | Vector store (dense + sparse hybrid search) |
 | [Ollama](https://ollama.com/) | Embeddings (`nomic-embed-text`) + LLM (`llama3.1:8b`) |
 | [FastEmbed](https://github.com/qdrant/fastembed) | Sparse (BM25) lexical vectors for hybrid search |
@@ -120,7 +121,7 @@ make bootstrap
 make ingest
 ```
 
-Open the chat UI at **http://localhost:8001** and ask something like:
+Open the chat UI at **http://localhost:5173** and ask something like:
 
 > I want a mind-bending sci-fi thriller about dreams
 
@@ -130,11 +131,19 @@ Open the chat UI at **http://localhost:8001** and ask something like:
 
 | Service | URL |
 |---------|-----|
-| Chainlit UI | http://localhost:8001 |
+| Web UI | http://localhost:5173 |
 | FastAPI docs | http://localhost:8000/docs |
 | Health | http://localhost:8000/health |
 | Readiness | http://localhost:8000/ready |
 | Qdrant dashboard | http://localhost:6333/dashboard |
+
+### Web UI (`web/`)
+
+A React + TypeScript frontend (Vite), calling `/ask` directly from the browser.
+`docker compose up`/`make dev` installs its dependencies and starts the Vite dev server
+automatically. To run it outside Docker: `cd web && npm install && npm run dev`. It reads
+the API's base URL from `VITE_API_URL` (see `web/.env.example`), and the FastAPI app has
+CORS enabled for the Vite dev server's origin (`src/api/app.py`).
 
 Stop everything with:
 

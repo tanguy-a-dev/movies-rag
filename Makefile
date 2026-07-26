@@ -13,15 +13,15 @@ bootstrap: ## Start full environment (docker + models + dataset)
 
 dev: ## Start dev environment (compose + dev overrides)
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-	@echo "Chainlit UI: http://localhost:8001"
-	@echo "FastAPI:     http://localhost:8000/docs"
-	@echo "Qdrant:      http://localhost:6333/dashboard"
+	@echo "Web UI:  http://localhost:5173"
+	@echo "FastAPI: http://localhost:8000/docs"
+	@echo "Qdrant:  http://localhost:6333/dashboard"
 
 up: ## Start production docker stack
 	docker compose up -d --build
-	@echo "Chainlit UI: http://localhost:8001"
-	@echo "FastAPI:     http://localhost:8000/docs"
-	@echo "Qdrant:      http://localhost:6333/dashboard"
+	@echo "Web UI:  http://localhost:5173"
+	@echo "FastAPI: http://localhost:8000/docs"
+	@echo "Qdrant:  http://localhost:6333/dashboard"
 
 check: ## Run lint, type checks and tests
 	@make lint

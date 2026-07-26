@@ -31,8 +31,6 @@ data/*
 .idea/
 *.swp
 
-.chainlit/
-
 .python-version
 
 .deepeval/

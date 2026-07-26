@@ -16,10 +16,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  chainlit:
-    volumes:
-      - .:/app
-
   # Use your own local Ollama instead (faster on Apple Silicon: real GPU
   # acceleration vs Docker Desktop's CPU-only containers). Opt back in with
   # `docker compose --profile with-ollama -f docker-compose.yml -f docker-compose.dev.yml up`

@@ -7,7 +7,6 @@ RUN pip install uv
 COPY pyproject.toml README.md ./
 COPY src ./src
 COPY scripts ./scripts
-COPY ui ./ui
 
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
