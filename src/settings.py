@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     sparse_vector_name: str = "bm25"
 
     metadata_rerank_pool: int = 30
+    popular_min_popularity: float = 15.0
+    highly_rated_min_vote_average: float = 7.0
+    highly_rated_min_vote_count: int = 50
 
     ollama_timeout: float = 120.0
     embedding_timeout: float = 30.0

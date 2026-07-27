@@ -31,6 +31,7 @@ Overview:
         "runtime": int(movie["runtime"]),
         "adult": bool(movie["adult"]),
         "release_date": movie["release_date"],
+        "poster_path": movie["poster_path"] or None,
     }
 
     return MovieDocument(

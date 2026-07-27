@@ -9,7 +9,9 @@ from qdrant_client.models import (
     Fusion,
     FusionQuery,
     HasIdCondition,
+    MatchValue,
     Prefetch,
+    Range,
     ScoredPoint,
 )
 
@@ -18,6 +20,7 @@ from src.clients.qdrant import client
 from src.settings import settings
 
 METADATA_SORT_FIELDS = {"rating": "vote_average", "popularity": "popularity"}
+TMDB_POSTER_BASE_URL = "https://image.tmdb.org/t/p/w342"
 
 
 class PointWithPayload(Protocol):
@@ -45,11 +48,36 @@ def _search_sync(
     question: str | None = None,
     min_year: int | None = None,
     max_year: int | None = None,
+    include_adult: bool = False,
+    popular_only: bool = False,
+    highly_rated_only: bool = False,
 ) -> list[ScoredPoint]:
     must = []
     if date_condition := _date_range_condition(min_year, max_year):
         must.append(date_condition)
+    if popular_only:
+        must.append(
+            FieldCondition(
+                key="popularity",
+                range=Range(gte=settings.popular_min_popularity),
+            )
+        )
+    if highly_rated_only:
+        must.append(
+            FieldCondition(
+                key="vote_average",
+                range=Range(gte=settings.highly_rated_min_vote_average),
+            )
+        )
+        must.append(
+            FieldCondition(
+                key="vote_count",
+                range=Range(gte=settings.highly_rated_min_vote_count),
+            )
+        )
     must_not = [HasIdCondition(has_id=list(exclude_ids))] if exclude_ids else []
+    if not include_adult:
+        must_not.append(FieldCondition(key="adult", match=MatchValue(value=True)))
     query_filter = Filter(must=must, must_not=must_not) if must or must_not else None
 
     if settings.hybrid_search_enabled and question:
@@ -87,10 +115,22 @@ async def search_movies(
     question: str | None = None,
     min_year: int | None = None,
     max_year: int | None = None,
+    include_adult: bool = False,
+    popular_only: bool = False,
+    highly_rated_only: bool = False,
 ) -> list[ScoredPoint]:
     k = top_k or settings.top_k
     return await asyncio.to_thread(
-        _search_sync, vector, k, exclude_ids, question, min_year, max_year
+        _search_sync,
+        vector,
+        k,
+        exclude_ids,
+        question,
+        min_year,
+        max_year,
+        include_adult,
+        popular_only,
+        highly_rated_only,
     )
 
 
@@ -150,12 +190,19 @@ def extract_sources(points: Sequence[PointWithPayload]) -> list[dict]:
     sources = []
     for point in points:
         payload = point.payload or {}
+        poster_path = payload.get("poster_path")
         sources.append(
             {
                 "movie_id": payload.get("movie_id"),
                 "title": payload.get("title", "Unknown"),
                 "genres": payload.get("genres"),
                 "overview": payload.get("overview"),
+                "poster_url": f"{TMDB_POSTER_BASE_URL}{poster_path}"
+                if poster_path
+                else None,
+                "vote_average": payload.get("vote_average"),
+                "popularity": payload.get("popularity"),
+                "release_date": payload.get("release_date"),
             }
         )
     return sources

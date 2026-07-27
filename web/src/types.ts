@@ -9,6 +9,10 @@ export interface Source {
   title: string;
   genres: string | null;
   overview: string | null;
+  poster_url: string | null;
+  vote_average: number | null;
+  popularity: number | null;
+  release_date: string | null;
 }
 
 export interface AskResponse {
@@ -17,6 +21,11 @@ export interface AskResponse {
   sources: Source[];
   validated: boolean;
   hallucinated_ids: number[];
+}
+
+export interface SearchResponse {
+  question: string;
+  results: Source[];
 }
 
 export interface ChatMessage {

@@ -48,6 +48,10 @@ def test_extract_sources_returns_structured_payload():
                 "title": "Inception",
                 "genres": "Action, Sci-Fi",
                 "overview": "Dream heist.",
+                "poster_path": "/inception.jpg",
+                "vote_average": 8.8,
+                "popularity": 100.0,
+                "release_date": "2010-07-16",
             }
         )
     ]
@@ -60,8 +64,20 @@ def test_extract_sources_returns_structured_payload():
             "title": "Inception",
             "genres": "Action, Sci-Fi",
             "overview": "Dream heist.",
+            "poster_url": "https://image.tmdb.org/t/p/w342/inception.jpg",
+            "vote_average": 8.8,
+            "popularity": 100.0,
+            "release_date": "2010-07-16",
         }
     ]
+
+
+def test_extract_sources_poster_url_none_when_no_poster_path():
+    points = [FakePoint({"title": "No Poster"})]
+
+    sources = extract_sources(points)
+
+    assert sources[0]["poster_url"] is None
 
 
 def test_search_sync_uses_hybrid_prefetch_when_question_given():
@@ -99,6 +115,113 @@ def test_search_sync_falls_back_to_dense_only_without_question():
         _, kwargs = mock_client.query_points.call_args
         assert "prefetch" not in kwargs
         assert kwargs["query"] == [0.1, 0.2]
+
+
+def test_search_sync_excludes_adult_content_by_default():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5)
+
+        _, kwargs = mock_client.query_points.call_args
+        conditions = kwargs["query_filter"].must_not
+        assert any(
+            c.key == "adult" and c.match.value is True for c in conditions
+        )
+
+
+def test_search_sync_includes_adult_content_when_requested():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5, include_adult=True)
+
+        _, kwargs = mock_client.query_points.call_args
+        assert kwargs["query_filter"] is None
+
+
+def test_search_sync_does_not_filter_by_popularity_by_default():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5)
+
+        _, kwargs = mock_client.query_points.call_args
+        conditions = kwargs["query_filter"].must
+        assert not any(c.key == "popularity" for c in conditions)
+
+
+def test_search_sync_filters_by_popularity_when_popular_only():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_settings.popular_min_popularity = 15.0
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5, popular_only=True)
+
+        _, kwargs = mock_client.query_points.call_args
+        conditions = kwargs["query_filter"].must
+        assert any(
+            c.key == "popularity" and c.range.gte == 15.0 for c in conditions
+        )
+
+
+def test_search_sync_does_not_filter_by_rating_by_default():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5)
+
+        _, kwargs = mock_client.query_points.call_args
+        conditions = kwargs["query_filter"].must
+        assert not any(c.key in ("vote_average", "vote_count") for c in conditions)
+
+
+def test_search_sync_filters_by_rating_when_highly_rated_only():
+    with (
+        patch("src.services.retrieval.settings") as mock_settings,
+        patch("src.services.retrieval.client") as mock_client,
+    ):
+        mock_settings.hybrid_search_enabled = False
+        mock_settings.collection_name = "movies"
+        mock_settings.highly_rated_min_vote_average = 7.0
+        mock_settings.highly_rated_min_vote_count = 50
+        mock_client.query_points.return_value.points = []
+
+        _search_sync([0.1, 0.2], top_k=5, highly_rated_only=True)
+
+        _, kwargs = mock_client.query_points.call_args
+        conditions = kwargs["query_filter"].must
+        assert any(
+            c.key == "vote_average" and c.range.gte == 7.0 for c in conditions
+        )
+        assert any(
+            c.key == "vote_count" and c.range.gte == 50 for c in conditions
+        )
 
 
 def test_sort_by_metadata_no_sort_keeps_original_order():
